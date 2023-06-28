@@ -45,7 +45,7 @@ class RestrictStepsListener implements StepListener {
         LoaderOptions options = new LoaderOptions()
         options.allowDuplicateKeys = true
         options.allowRecursiveKeys = false
-        // 5MB data limit?  code point limit is not well explained
+        // 5MB-20MB data limit
         options.codePointLimit = 5242880
         options.maxAliasesForCollections = 500
         options.nestingDepthLimit = 500
@@ -56,18 +56,17 @@ class RestrictStepsListener implements StepListener {
     }
 
     Map getRestricted() {
-        def config_files = Jenkins.instance.getExtensionList(GlobalConfigFiles)[0]
-        if(config_files.getById(config_id)) {
-            if(config != config_files.getById(config_id).content) {
-                try {
-                    config_files.getById(config_id).content.text.with { String yaml ->
-                        parseYaml(yaml).each { k, v ->
-                            restricted[k] = v
-                        }
-                        config = yaml
-                    }
-                } catch(Exception ignored) {}
+        def config_files = Jenkins.instance.getExtensionList(GlobalConfigFiles).get(GlobalConfigFiles)
+        config_files.getById(config_id)?.content?.with { yaml ->
+            if(!yaml) {
+                return
             }
+            try {
+                parseYaml(yaml).each { k, v ->
+                    restricted[k] = v
+                }
+                this.config = yaml
+            } catch(Exception ignored) {}
         }
 
         Collections.unmodifiableMap(restricted ?: [:])
