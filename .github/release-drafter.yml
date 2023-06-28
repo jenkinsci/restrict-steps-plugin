@@ -1,0 +1,2 @@
+_extends: .github
+tag-template: restrict-steps-$NEXT_MINOR_VERSION
