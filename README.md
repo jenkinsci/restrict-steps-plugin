@@ -1,9 +1,10 @@
 # Restrict Steps Plugin
 
+This is currently in early-phase development.
+
 ## Introduction
 
 This plugin allows you to block pipeline steps from being used in any context.
-This is currently in early-phase development.
 
 Useful for disabling steps available to users.
 
@@ -23,6 +24,34 @@ The following gaps are desirable to fill.
 Install the plugin and add a config file to the global managed files of the
 [config file provider][1] plugin.
 
+1. Go to _Manage Jenkins > Manage files_.
+2. Create a _Custom file_ with ID `restricted-steps` (this is currently
+   non-configurable)
+3. Give it a sensible name like `Restricted Pipeline Steps`
+4. Add a comment like `Prevents users from calling these steps in pipelines`
+5. Populate the file with YAML containing a `steps` key.  The contents of the
+   key should be a `List` and the name of the step is each item.
+
+Example YAML:
+
+```yaml
+# the following steps will cause a build to fail
+steps:
+  - bat
+  - configFileProvider
+  - createSummary
+  - dockerFingerprintFrom
+  - envVarsForTool
+  - jobDsl
+  - load
+  - tool
+  - withCredentials
+  - withDockerRegistry
+  - withDockerServer
+  - withGroovy
+  - ws
+```
+
 ## Config as code
 
 ```yaml
@@ -30,10 +59,23 @@ unclassified:
   globalConfigFiles:
     configs:
       - custom:
-          comment: Prevents users from calling these steps
+          comment: Prevents users from calling these steps in pipelines
           content: |-
+            # the following steps will cause a build to fail
             steps:
-              - sh
+              - bat
+              - configFileProvider
+              - createSummary
+              - dockerFingerprintFrom
+              - envVarsForTool
+              - jobDsl
+              - load
+              - tool
+              - withCredentials
+              - withDockerRegistry
+              - withDockerServer
+              - withGroovy
+              - ws
           id: restricted-steps
           name: Restricted Pipeline Steps
           providerId: org.jenkinsci.plugins.configfiles.custom.CustomConfig
