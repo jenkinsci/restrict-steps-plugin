@@ -1,6 +1,8 @@
 # Restrict Steps Plugin
 
-This is currently in early-phase development.
+This is currently in early-phase development.  Feature request [JENKINS-69606][JENKINS-69606]
+
+[JENKINS-69606]: https://issues.jenkins.io/browse/JENKINS-69606
 
 ## Introduction
 
