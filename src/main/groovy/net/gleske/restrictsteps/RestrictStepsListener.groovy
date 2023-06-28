@@ -24,8 +24,17 @@ import org.yaml.snakeyaml.LoaderOptions
 import org.yaml.snakeyaml.Yaml
 import org.yaml.snakeyaml.constructor.SafeConstructor
 
+// GraphListener additions
+import org.jenkinsci.plugins.workflow.flow.GraphListener
+import org.jenkinsci.plugins.workflow.graph.FlowNode
+import org.jenkinsci.plugins.workflow.actions.TimingAction
+import org.jenkinsci.plugins.workflow.support.actions.LogStorageAction
+import org.jenkinsci.plugins.workflow.cps.actions.ArgumentsActionImpl
+import org.jenkinsci.plugins.workflow.actions.BodyInvocationAction
+import org.jenkinsci.plugins.workflow.actions.LabelAction
+
 @Extension
-class RestrictStepsListener implements StepListener {
+class RestrictStepsListener implements GraphListener, StepListener {
     private class BlockedStepCause extends CauseOfInterruption {
         private String message
         BlockedStepCause(String message) {
@@ -40,36 +49,33 @@ class RestrictStepsListener implements StepListener {
     private static final Logger logger = Logger.getLogger(RestrictStepsListener.class.getName());
     private transient ConcurrentHashMap restricted
     private transient String config
+    private transient GlobalConfigFiles configFiles
+    private transient Yaml yamlParser
 
-    private Map parseYaml(String content) {
-        LoaderOptions options = new LoaderOptions()
-        options.allowDuplicateKeys = true
-        options.allowRecursiveKeys = false
-        // 5MB-20MB data limit
-        options.codePointLimit = 5242880
-        options.maxAliasesForCollections = 500
-        options.nestingDepthLimit = 500
-        options.processComments = false
-        options.wrappedToRootException = false
-        def yaml = new Yaml(new SafeConstructor(options))
-        yaml.load(content)
-    }
-
-    Map getRestricted() {
-        def config_files = Jenkins.instance.getExtensionList(GlobalConfigFiles).get(GlobalConfigFiles)
-        config_files.getById(config_id)?.content?.with { yaml ->
-            if(!yaml) {
+    synchronized Map resolveRestricted() {
+        if(!this.restricted) {
+            this.restricted = new ConcurrentHashMap()
+        }
+        if(!this.configFiles) {
+            this.configFiles = Jenkins.instance.getExtensionList(GlobalConfigFiles).get(GlobalConfigFiles)
+        }
+        if(!this.yamlParser) {
+            this.yamlParser = new Yaml(new SafeConstructor(new LoaderOptions()))
+        }
+        String content = configFiles.getById(this.config_id)?.content
+        if(content) {
+            this.restricted.clear()
+            def parsed = yamlParser.load(content)
+            if(!(parsed in Map) || !(parse?.steps in List)) {
+                // TODO severe log
                 return
             }
-            try {
-                parseYaml(yaml).each { k, v ->
-                    restricted[k] = v
-                }
-                this.config = yaml
-            } catch(Exception ignored) {}
+            parsed.each { k, v ->
+                this.restricted[k] = v
+            }
         }
 
-        Collections.unmodifiableMap(restricted ?: [:])
+        Collections.unmodifiableMap(this.restricted ?: [:])
     }
 
     /**
@@ -87,15 +93,61 @@ class RestrictStepsListener implements StepListener {
             Running step: ${step.class}
             step class: ${stepName}
             sandbox: ${flowDefinition?.isSandbox() ?: false}
+            config: ${resolveRestricted()}
             """.stripIndent().trim())
-        if(!(getRestricted()?.steps in List)) {
+        Map deny = resolveRestricted()
+        if(!deny) {
             return
         }
         // notify context to abort job
-        if(stepName in restricted?.steps) {
+        if(stepName in deny.steps) {
             FlowInterruptedException cause = new FlowInterruptedException(Result.FAILURE, new BlockedStepCause("ERROR: ${stepName} step not allowed via restricted steps by admin."));
             context.completed(new Outcome(null, cause))
         }
+    }
+    */
+
+    /**
+       Search graph events.
+     */
+    @Override
+    void onNewHead(FlowNode node) {
+        ArgumentsActionImpl args = node.getAction(ArgumentsActionImpl)
+        logger.finest("""\
+            FLOWNODE
+                displayName ${node?.getDisplayName()}
+                displayFunctionName ${node?.getDisplayFunctionName()}
+                sandbox ${node?.execution?.isSandbox()}
+                parent sandbox ${node.parents*.execution*.isSandbox().inspect()}
+                typeDisplayName ${node?.getTypeDisplayName()}
+                typeFunctionName ${node?.getTypeFunctionName()}
+            TimingAction
+                displayName ${node.getAction(TimingAction)?.getDisplayName()}
+            LogStorageAction
+                displayName ${node.getAction(LogStorageAction)?.getDisplayName()}
+            ArgumentsActionImpl
+                argumentsInternal ${args?.getArgumentsInternal()}
+                displayName ${args?.getDisplayName()}
+                stepArgumentsAsString ${args?.getStepArgumentsAsString()}
+            BodyInvocationAction
+                displayName ${node.getAction(BodyInvocationAction)?.getDisplayName()}
+            LabelAction
+                displayName ${node.getAction(LabelAction)?.getDisplayName()}
+            Actions
+                ${node.actions.join('\n    ')}
+            """.stripIndent().trim())
+
+        /* no good; execution already starts by the time this point is reached.
+        Map deny = resolveRestricted()
+        if(!(deny?.steps in List)) {
+            return
+        }
+        String stepName = node.typeFunctionName
+        if(stepName in deny.steps) {
+            BlockedStepCause cause = new BlockedStepCause("ERROR: ${stepName} step not allowed via restricted steps by admin.")
+            node.execution.interrupt(Result.FAILURE, cause)
+        }
+        */
     }
 
 }
