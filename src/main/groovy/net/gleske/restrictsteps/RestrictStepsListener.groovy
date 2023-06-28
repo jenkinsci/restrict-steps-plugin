@@ -105,7 +105,6 @@ class RestrictStepsListener implements GraphListener, StepListener {
             context.completed(new Outcome(null, cause))
         }
     }
-    */
 
     /**
        Search graph events.
