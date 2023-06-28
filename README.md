@@ -5,7 +5,9 @@
 This plugin allows you to block pipeline steps from being used in any context.
 This is currently in early-phase development.
 
-# Known gaps
+Useful for disabling steps available to users.
+
+## Known gaps
 
 The following gaps are desirable to fill.
 
