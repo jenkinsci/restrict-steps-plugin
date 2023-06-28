@@ -41,7 +41,7 @@ class RestrictStepsListener implements StepListener {
     private transient ConcurrentHashMap restricted
     private transient String config
 
-    private Map parseYaml(def content) {
+    private Map parseYaml(String content) {
         LoaderOptions options = new LoaderOptions()
         options.allowDuplicateKeys = true
         options.allowRecursiveKeys = false
@@ -60,10 +60,12 @@ class RestrictStepsListener implements StepListener {
         if(config_files.getById(config_id)) {
             if(config != config_files.getById(config_id).content) {
                 try {
-                    parseYaml(config).each { k, v ->
-                        restricted[k] = v
+                    config_files.getById(config_id).content.text.with { String yaml ->
+                        parseYaml(yaml).each { k, v ->
+                            restricted[k] = v
+                        }
+                        config = yaml
                     }
-                    config = config_files.getById(config_id).content
                 } catch(Exception ignored) {}
             }
         }
