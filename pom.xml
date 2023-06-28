@@ -11,7 +11,7 @@
   <artifactId>restrict-steps</artifactId>
   <version>${revision}${changelist}</version>
   <packaging>hpi</packaging>
-  <name>TODO Plugin</name>
+  <name>Restrict Steps Plugin</name>
   <url>https://github.com/jenkinsci/${project.artifactId}-plugin</url>
   <licenses>
     <license>
