@@ -1,28 +1,44 @@
-# restrict-steps
+# Restrict Steps Plugin
 
 ## Introduction
 
-TODO Describe what your plugin does here
+This plugin allows you to block pipeline steps from being used in any context.
+This is currently in early-phase development.
+
+# Known gaps
+
+The following gaps are desirable to fill.
+
+- It will block steps called from global shared libraries and user pipelines
+  alike.  Global pipeline libraries should be excluded.
+- User vars in shared pipeline libraries are not covered.  I would like to have
+  admin-only vars that can be called from global library but users not able to
+  call them directly except through intended pipeline steps.
+- Declarative pipeline is not currently covered.
 
 ## Getting started
 
-TODO Tell users how to configure your plugin here, include screenshots, pipeline examples and 
-configuration-as-code examples.
+Install the plugin and add a config file to the global managed files of the
+[config file provider][1] plugin.
 
-## Issues
+## Config as code
 
-TODO Decide where you're going to host your issues, the default is Jenkins JIRA, but you can also enable GitHub issues,
-If you use GitHub issues there's no need for this section; else add the following line:
-
-Report issues and enhancements in the [Jenkins issue tracker](https://issues.jenkins.io/).
-
-## Contributing
-
-TODO review the default [CONTRIBUTING](https://github.com/jenkinsci/.github/blob/master/CONTRIBUTING.md) file and make sure it is appropriate for your plugin, if not then add your own one adapted from the base file
-
-Refer to our [contribution guidelines](https://github.com/jenkinsci/.github/blob/master/CONTRIBUTING.md)
+```yaml
+unclassified:
+  globalConfigFiles:
+    configs:
+      - custom:
+          comment: Prevents users from calling these steps
+          content: |-
+            steps:
+              - sh
+          id: restricted-steps
+          name: Restricted Pipeline Steps
+          providerId: org.jenkinsci.plugins.configfiles.custom.CustomConfig
+```
 
 ## LICENSE
 
 Licensed under MIT, see [LICENSE](LICENSE.md)
 
+[1]: https://plugins.jenkins.io/config-file-provider/
