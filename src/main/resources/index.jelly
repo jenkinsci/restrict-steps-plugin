@@ -1,4 +1,7 @@
 <?jelly escape-by-default='true'?>
 <div>
-    TODO
+    Restrict steps plugin is currently a POC for
+    <a href="https://issues.jenkins.io/browse/JENKINS-69606">JENKINS-69606</a>.
+    Configuration is loaded from the config file provider plugin.  See project
+    README for details.
 </div>
