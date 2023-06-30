@@ -34,8 +34,10 @@ import org.jenkinsci.plugins.workflow.actions.BodyInvocationAction
 import org.jenkinsci.plugins.workflow.actions.LabelAction
 
 @Extension
-class RestrictStepsListener implements GraphListener, StepListener {
+class RestrictStepsListener implements GraphListener, StepListener, Serializable {
+    private static final long serialVersionUID = 1L
     private class BlockedStepCause extends CauseOfInterruption {
+        private static final long serialVersionUID = 1L
         private String message
         BlockedStepCause(String message) {
             this.message = message
