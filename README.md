@@ -2,7 +2,10 @@
 
 This is currently in early-phase development.  Feature request [JENKINS-69606][JENKINS-69606]
 
+Report feature requests or bugs [in JIRA][jira].
+
 [JENKINS-69606]: https://issues.jenkins.io/browse/JENKINS-69606
+[jira]: https://issues.jenkins.io/browse/JENKINS-71574?jql=project%20%3D%20JENKINS%20AND%20component%20%3D%20restrict-steps-plugin
 
 ## Introduction
 
