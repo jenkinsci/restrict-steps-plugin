@@ -1,4 +1,4 @@
-package net.gleske.restrictsteps
+package io.jenkins.plugins.restrictsteps
 
 import com.cloudbees.groovy.cps.Outcome
 import hudson.Extension
