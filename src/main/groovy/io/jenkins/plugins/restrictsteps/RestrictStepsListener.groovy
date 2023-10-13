@@ -89,7 +89,7 @@ class RestrictStepsListener implements GraphListener, StepListener, Serializable
         if(content) {
             this.restricted.clear()
             def parsed = yamlParser.load(content)
-            if(!(parsed in Map) || !(parse?.steps in List)) {
+            if(!(parsed in Map) || !(parsed?.steps in List)) {
                 // TODO severe log
                 return
             }
